@@ -8,6 +8,43 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
+# --- Estilo da barra lateral (sidebar) ---
+# Injetando CSS para personalizar cores e aparência
+st.markdown(
+    """
+    <style>
+      /* Fundo da página principal */
+      .stApp {
+        background-color: #DFDFEE;
+      }
+      /* Fundo da sidebar */
+      section[data-testid="stSidebar"] {
+        background-color: #0A0C54;
+      }
+      /* Cor do texto e rótulos da sidebar */
+      section[data-testid="stSidebar"] h2,
+      section[data-testid="stSidebar"] label,
+      section[data-testid="stSidebar"] span {
+        color: #DFDFEE;
+      }
+      /* Multiselect: cor da caixa onde fica os botões */
+      section[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div {
+        background-color: #DFDFEE;
+        color: #0A0C54;
+        border: 1px solid #0A0C54;
+      }
+      /* Multiselect: cor das letras dos botões de seleção */
+      section[data-testid="stSidebar"] .stMultiSelect span {
+        color: #DFDFEE;
+      }
+      /* Multiselect: fundo dos botões de seleção do filtro */
+      section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
+        background-color: #0A0C54;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Carregamento dos dados ---
 df= pd.read_csv('https://raw.githubusercontent.com/AndersonSantos-of/imersao_alura/refs/heads/main/df_limpo.csv')
@@ -127,7 +164,8 @@ with col_graf3:
             names='tipo_trabalho2',
             values='quantidade',
             title='Proporção dos tipos de trabalho',
-            hole=0.5
+            hole=0.5,
+            color_discrete_sequence=["#006aff", "#FF9D00", "#15f463"] #selecionando as cores do gráfico
         )
         grafico_remoto.update_traces(textinfo='percent+label')
         grafico_remoto.update_layout(title_x=0.1)
