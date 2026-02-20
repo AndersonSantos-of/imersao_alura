@@ -8,43 +8,6 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
-# --- Estilo da barra lateral (sidebar) ---
-# Injetando CSS para personalizar cores e aparência
-st.markdown(
-    """
-    <style>
-      /* Fundo da página principal */
-      .stApp {
-        background-color: #DFDFEE;
-      }
-      /* Fundo da sidebar */
-      section[data-testid="stSidebar"] {
-        background-color: #0A0C54;
-      }
-      /* Cor do texto e rótulos da sidebar */
-      section[data-testid="stSidebar"] h2,
-      section[data-testid="stSidebar"] label,
-      section[data-testid="stSidebar"] span {
-        color: #DFDFEE;
-      }
-      /* Multiselect: cor da caixa onde fica os botões */
-      section[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div {
-        background-color: #DFDFEE;
-        color: #0A0C54;
-        border: 1px solid #0A0C54;
-      }
-      /* Multiselect: cor das letras dos botões de seleção */
-      section[data-testid="stSidebar"] .stMultiSelect span {
-        color: #DFDFEE;
-      }
-      /* Multiselect: fundo dos botões de seleção do filtro */
-      section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
-        background-color: #0A0C54;
-      }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # --- Carregamento dos dados ---
 df= pd.read_csv('https://raw.githubusercontent.com/AndersonSantos-of/imersao_alura/refs/heads/main/df_limpo.csv')
@@ -175,15 +138,39 @@ with col_graf3:
 
 with col_graf4:
     if not df_filtrado.empty:
-        df_ds = df_filtrado[df_filtrado['cargo'] == 'Data Scientist']
-        media_ds_pais = df_ds.groupby('residencia_iso3')['salario_em_usd'].mean().reset_index()
-        grafico_paises = px.choropleth(media_ds_pais,
-            locations='residencia_iso3',
-            color='salario_em_usd',
-            color_continuous_scale='rdylgn',
-            title='Salário médio de Cientista de Dados por país',
-            labels={'salario_em_usd': 'Salário médio (USD)', 'residencia_iso3': 'País'})
-        grafico_paises.update_layout(title_x=0.1)
-        st.plotly_chart(grafico_paises, use_container_width=True)
+        # Lista os cargos disponíveis após aplicar os filtros da sidebar.
+        cargos_disponiveis = sorted(df_filtrado['cargo'].unique())
+        # Define "Data Scientist" como padrão quando existir; caso contrário usa o primeiro cargo.
+        cargo_padrao = cargos_disponiveis.index('Data Scientist') if 'Data Scientist' in cargos_disponiveis else 0
+        # Cria o seletor para o usuário escolher qual cargo visualizar no mapa.
+        cargo_selecionado = st.selectbox(
+            "Selecione o cargo para visualizar no mapa:",
+            cargos_disponiveis,
+            index=cargo_padrao
+        )
+
+        # Filtra somente os registros do cargo selecionado.
+        df_cargo = df_filtrado[df_filtrado['cargo'] == cargo_selecionado]
+        # Calcula o salário médio por país para o cargo escolhido.
+        media_cargo_pais = df_cargo.groupby('residencia_iso3')['salario_em_usd'].mean().reset_index()
+
+        # Só desenha o mapa se houver dados agregados por país.
+        if not media_cargo_pais.empty:
+            # Monta o mapa coroplético com escala de cor baseada no salário médio.
+            grafico_paises = px.choropleth(
+                media_cargo_pais,
+                locations='residencia_iso3',
+                color='salario_em_usd',
+                color_continuous_scale='rdylgn',
+                title=f'Salário médio de {cargo_selecionado} por país',
+                labels={'salario_em_usd': 'Salário médio (USD)', 'residencia_iso3': 'País'}
+            )
+            # Ajusta o alinhamento do título e renderiza o gráfico na coluna.
+            grafico_paises.update_layout(title_x=0.1)
+            st.plotly_chart(grafico_paises, use_container_width=True)
+        else:
+            # Exibe aviso quando o cargo escolhido não possui dados no mapa.
+            st.warning("Nenhum dado para exibir no mapa para o cargo selecionado.")
     else:
+        # Exibe aviso quando os filtros removem todos os registros do dataset.
         st.warning("Nenhum dado para exibir no gráfico de países.")
